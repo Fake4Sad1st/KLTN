@@ -186,9 +186,9 @@ def test_bound(delta: int, orbit_vertices: List[int], input: str, bound: int) ->
         "SavedAt": datetime.now().isoformat(timespec="seconds"),
         "Algorithm": filename,
         "Input": input,
-        "delta": delta,
-        "n": n,
-        "bound": bound,
+        "Delta": delta,
+        "N": n,
+        "Bound": bound,
         "Variables": num_variables,
         "Clauses": num_clauses,
     }

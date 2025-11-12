@@ -48,8 +48,8 @@ def run_ub_2020(n: int, C: List[List[int]], delta: int, input: str) -> Tuple[Lis
         "SavedAt": datetime.now().isoformat(timespec="seconds"),
         "Algorithm": filename,
         "Input": input,
-        "n": n,
-        "delta": delta,
+        "N": n,
+        "Delta": delta,
         "Span": best_span,
     }
 
