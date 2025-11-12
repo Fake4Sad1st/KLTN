@@ -205,7 +205,10 @@ def main() -> None:
     def validate(labels: List[int]):
         ok, msg = validate_labels(labels, dist, K, n)
         if ok: print_to_console("Validate: OK (satisfies radio constraint)")
-        else: print_to_console(f"Validate: FAIL - {msg}")
+        else:
+            print_to_console(f"Validate: FAIL - {msg}")
+            write_to_log_file()
+            raise SystemExit(f"Validation failed!!!")
 
     if args.algo == UB_2020:
         labels, span = run_ub_2020(n, C, args.delta, short_input)

@@ -101,14 +101,14 @@ def add_radio_constraints():
                 - Or label[v] >= val+req  (i.e., not label[v] <= val+req-1)
                 '''
                 lower_bound = val - req  # label[v] must be <= this
-                upper_bound = val + req - 1  # label[v] must NOT be <= this (i.e., label[v] >= val+req)
+                upper_bound = val + req - 1  # label[v] must NOT be <= this (i.e., label[v] >= val + req)
                 
                 # Case 1: Both boundaries are valid (lower_bound >= 0 and upper_bound < m)
-                if lower_bound >= 0 and upper_bound < m:
+                if lower_bound >= 0 and upper_bound <= m:
                     # label[v] <= lower_bound OR NOT(label[v] <= upper_bound)
                     _add_clause([-_K(u, val), _X(v, lower_bound), -_X(v, upper_bound)])
                 # Case 2: Lower boundary invalid (lower_bound < 0), so we only need upper_bound
-                elif upper_bound < m:
+                elif upper_bound <= m:
                     _add_clause([-_K(u, val), -_X(v, upper_bound)])
                 # Case 3: Upper boundary invalid (upper_bound >= m), so we only need lower_bound
                 elif lower_bound >= 0:
