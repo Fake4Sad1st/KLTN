@@ -1,8 +1,6 @@
-from typing import List, Tuple, Optional
-import time
-import os
-import csv
+import time, os, csv, math
 from datetime import datetime
+from typing import List, Tuple
 from z3 import Solver, Ints, Or, sat, unsat
 
 TIME_LIMIT = 600
@@ -11,13 +9,13 @@ STATUS_SAT = 0
 STATUS_TIMEOUT = 1
 STATUS_UNSAT = 2
 
-
 filename = os.path.basename(__file__).split(".")[0]
 n: int
 C: List[List[int]]
 saved_labels: List[int]
 saved_text: str = ""
 saved_rows: List[dict] = []
+total_time: float = 0.0
 
 # ============================== LOGGING + REPORTING ==============================
 _repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -95,7 +93,7 @@ def run_z3(orbit_vertices: List[int], bound: int) -> Tuple[str, float]:
         return "timeout", TIME_LIMIT
 
 def test_bound(delta: int, orbit_vertices: List[int], input: str, bound: int) -> int:
-    global saved_rows
+    global saved_rows, total_time
     row = {
         "SavedAt": datetime.now().isoformat(timespec="seconds"),
         "Algorithm": filename,
@@ -107,12 +105,32 @@ def test_bound(delta: int, orbit_vertices: List[int], input: str, bound: int) ->
     status, elapsed_time = run_z3(orbit_vertices, bound)
     row["Result"] = status
     row["Time"] = elapsed_time
+    total_time += elapsed_time
     saved_rows.append(row)
 
     if status == "sat": return STATUS_SAT
     elif status == "timeout": return STATUS_TIMEOUT
     return STATUS_UNSAT
 
+def format_time(seconds: float) -> str:
+    total_seconds = int(math.floor(seconds))
+    
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    secs = total_seconds % 60
+    
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours}h")
+        parts.append(f"{minutes}m")
+        parts.append(f"{secs}s")
+    elif minutes > 0:
+        parts.append(f"{minutes}m")
+        parts.append(f"{secs}s")
+    else:
+        parts.append(f"{secs}s")
+    
+    return "".join(parts)
 
 def run_smt_z3(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[int], input: str, ub: int, lb: int) -> Tuple[List[int], int, int, str]:
     global n, C, saved_labels
@@ -157,6 +175,7 @@ def run_smt_z3(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[in
         "N": n,
         "UpperBound": ub,
         "LowerBound": lb,
+        "TotalTime": format_time(total_time),
     }
     write_to_csv([row], f"{filename}_final")
     write_to_csv(saved_rows, filename)

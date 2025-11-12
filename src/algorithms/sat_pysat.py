@@ -1,8 +1,6 @@
-from typing import List, Optional, Tuple
-import os
-import csv
-import time
+import time, os, csv, math
 from datetime import datetime
+from typing import List, Optional, Tuple
 
 from pysat.solvers import Glucose3
 from threading import Timer
@@ -22,6 +20,7 @@ sat_solver: Optional[Glucose3] = None
 saved_labels: List[int]
 saved_text: str = ""
 saved_rows: List[dict] = []
+total_time: float = 0.0
 
 # ============================== LOGGING + REPORTING ==============================
 _repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
@@ -126,6 +125,26 @@ def add_special_constraints(orbit_vertices: List[int]):
     for i in range(1, n + 1): lst.append(_K(i, m))
     _add_clause(lst)
 
+def format_time(seconds: float) -> str:
+    total_seconds = int(math.floor(seconds))
+    
+    hours = total_seconds // 3600
+    minutes = (total_seconds % 3600) // 60
+    secs = total_seconds % 60
+    
+    parts = []
+    if hours > 0:
+        parts.append(f"{hours}h")
+        parts.append(f"{minutes}m")
+        parts.append(f"{secs}s")
+    elif minutes > 0:
+        parts.append(f"{minutes}m")
+        parts.append(f"{secs}s")
+    else:
+        parts.append(f"{secs}s")
+    
+    return "".join(parts)
+
 def run_glucose(bound: int) -> Tuple[str, float]:
     print_to_console(f"[SAT_pysat] Checking span {bound} ...")
     assert sat_solver is not None
@@ -166,7 +185,7 @@ def run_glucose(bound: int) -> Tuple[str, float]:
         return "sat", elapsed_time
 
 def test_bound(delta: int, orbit_vertices: List[int], input: str, bound: int) -> int:
-    global num_clauses, n, m, sat_solver, saved_rows
+    global num_clauses, n, m, sat_solver, saved_rows, total_time
     num_clauses = 0
     m = bound
     sat_solver = Glucose3(use_timer=True)
@@ -193,10 +212,12 @@ def test_bound(delta: int, orbit_vertices: List[int], input: str, bound: int) ->
         "Clauses": num_clauses,
     }
     status, elapsed_time = run_glucose(bound)
+    sat_solver.delete()
+
     row["Result"] = status
     row["Time"] = elapsed_time
+    total_time += elapsed_time
     saved_rows.append(row)
-    sat_solver.delete()
 
     if status == "sat": return STATUS_SAT
     elif status == "timeout": return STATUS_TIMEOUT
@@ -245,6 +266,7 @@ def run_sat_pysat(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List
         "N": n,
         "UpperBound": ub,
         "LowerBound": lb,
+        "TotalTime": format_time(total_time),
     }
     write_to_csv([row], f"{filename}_final")
     write_to_csv(saved_rows, filename)
