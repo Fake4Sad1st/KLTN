@@ -37,6 +37,6 @@ for k in $(seq 1 15); do
   python3 ./src/graph_k_labeling.py --algo ub_2020 --input ./graph_gen/c6snake/$k.txt
 done
 
-for k in $(seq 0 11); do
+for k in $(seq 0 7); do
   python3 ./src/graph_k_labeling.py --algo ub_2020 --input ./graph_gen/bintree/$k.txt
 done

@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # Resolve repo root (this script is under scripts)
-ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+ROOT_DIR="$(cd "$(dirname "$0")/../.." && pwd)"
 cd "$ROOT_DIR"
 
 for k in $(seq 1 25); do

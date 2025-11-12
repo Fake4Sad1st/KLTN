@@ -131,13 +131,15 @@ from algorithms.sat_pysat import run_sat_pysat
 from algorithms.smt_z3 import run_smt_z3
 from algorithms.ub_2020 import run_ub_2020
 from algorithms.ub_2019 import run_ub_2019
+from algorithms.lb_2012 import run_lb_2012
 
 # Supported algorithms
+LB_2012 = "lb_2012"
 UB_2020 = "ub_2020"
 UB_2019 = "ub_2019"
 SAT_PYSAT = "sat_pysat"
 SMT_Z3 = "smt_z3"
-SUPPORTED_ALGORITHMS = [UB_2020, UB_2019, SAT_PYSAT, SMT_Z3]
+SUPPORTED_ALGORITHMS = [LB_2012, UB_2020, UB_2019, SAT_PYSAT, SMT_Z3]
 
 # --- simple logging for CLI driver ---
 _repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -200,7 +202,7 @@ def main() -> None:
     C = build_C(dist, n, K)
     
     print_to_console(f"Algorithm: {args.algo}")
-    print_to_console(f"n={n}, diameter={dia}, K={K}")
+    print_to_console(f"n={n}, diameter={dia}, delta={args.delta}")
 
     def validate(labels: List[int]):
         ok, msg = validate_labels(labels, dist, K, n)
@@ -221,6 +223,11 @@ def main() -> None:
         print_to_console(f"Span found = {span}")
         print_to_console(f"Labels: {labels[1:]}")
         validate(labels)
+
+    elif args.algo == LB_2012:
+        if args.delta > 0: raise SystemExit(f"Delta must be non-positive, got {args.delta}")
+        lower_bound = run_lb_2012(n, dist, K, args.delta, short_input)
+        print_to_console(f"LowerBound found = {lower_bound}")
 
     elif args.algo in [SAT_PYSAT, SMT_Z3]:
         if args.lb is not None: lower_bound = args.lb
