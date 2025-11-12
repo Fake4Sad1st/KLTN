@@ -1,0 +1,14 @@
+[requires]
+python_version = "3.12"
+
+[packages]
+python-sat = "*"
+pypblib = "*"
+prettytable = "*"
+pandas = "*"
+z3-solver = "*"
+igraph = "*"
+
+[dev-packages]
+
+
