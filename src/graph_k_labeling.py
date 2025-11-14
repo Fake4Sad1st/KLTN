@@ -132,14 +132,16 @@ from algorithms.smt_z3 import run_smt_z3
 from algorithms.ub_2020 import run_ub_2020
 from algorithms.ub_2019 import run_ub_2019
 from algorithms.lb_2012 import run_lb_2012
+from algorithms.lb_2017 import run_lb_2017
 
 # Supported algorithms
 LB_2012 = "lb_2012"
+LB_2017 = "lb_2017"
 UB_2020 = "ub_2020"
 UB_2019 = "ub_2019"
 SAT_PYSAT = "sat_pysat"
 SMT_Z3 = "smt_z3"
-SUPPORTED_ALGORITHMS = [LB_2012, UB_2020, UB_2019, SAT_PYSAT, SMT_Z3]
+SUPPORTED_ALGORITHMS = [LB_2012, LB_2017, UB_2020, UB_2019, SAT_PYSAT, SMT_Z3]
 
 # --- simple logging for CLI driver ---
 _repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -227,6 +229,11 @@ def main() -> None:
     elif args.algo == LB_2012:
         if args.delta > 0: raise SystemExit(f"Delta must be non-positive, got {args.delta}")
         lower_bound = run_lb_2012(n, dist, K, args.delta, short_input)
+        print_to_console(f"LowerBound found = {lower_bound}")
+    
+    elif args.algo == LB_2017:
+        if args.delta > 0: raise SystemExit(f"Delta must be non-positive, got {args.delta}")
+        lower_bound = run_lb_2017(n, K, args.delta, short_input, edges)
         print_to_console(f"LowerBound found = {lower_bound}")
 
     elif args.algo in [SAT_PYSAT, SMT_Z3]:
