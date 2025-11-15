@@ -1,7 +1,6 @@
 from typing import List, Tuple
 import os, csv, time
-import gurobipy as gp
-from gurobipy import GRB
+from docplex.mp.model import Model
 from datetime import datetime
 
 TIME_LIMIT = 1200
@@ -28,27 +27,25 @@ def write_to_csv(row: dict) -> None:
             w.writeheader()
         w.writerow(row)
 
-def run_gurobi(n: int, C: List[List[int]], K: int, delta: int, input: str) -> Tuple[List[int], int, str]:
+def run_cplex_mip(n: int, C: List[List[int]], K: int, delta: int, input: str) -> Tuple[List[int], int, str]:
     def solve() -> Tuple[List[int], int, str, float]:
-        # Tạo môi trường và model
-        env = gp.Env(empty=True)
-        env.setParam('LogToConsole', 0)
-        env.start()
-        m = gp.Model("radio_k_labeling", env=env)
-        m.setParam('OutputFlag', 0)
-        m.setParam('TimeLimit', TIME_LIMIT)
+        # Tạo mô hình CPLEX
+        m = Model(name="radio_k_labeling")
+        m.set_time_limit(TIME_LIMIT)
+        m.parameters.threads = 1
+        m.parameters.mip.display = 0
         
         # Tạo biến: labels và span
         labels = {}
         for i in range(1, n + 1):
-            labels[i] = m.addVar(vtype=GRB.INTEGER, lb=0, name=f"label_{i}")
+            labels[i] = m.integer_var(lb=0, name=f"label_{i}")
         
         # span là maximum của tất cả labels
-        span = m.addVar(vtype=GRB.INTEGER, lb=0, name="span")
+        span = m.integer_var(lb=0, name="span")
         
         # Ràng buộc: labels[i] <= span cho mọi i
         for i in range(1, n + 1):
-            m.addConstr(labels[i] <= span, name=f"span_constraint_{i}")
+            m.add_constraint(labels[i] <= span, ctname=f"span_constraint_{i}")
         
         # Ràng buộc radio: |labels[i] - labels[j]| >= C[i][j]
         # Sử dụng big-M với biến nhị phân
@@ -62,34 +59,43 @@ def run_gurobi(n: int, C: List[List[int]], K: int, delta: int, input: str) -> Tu
                 
                 # Biến nhị phân: b[i][j] = 0 nếu labels[i] - labels[j] >= req
                 #                b[i][j] = 1 nếu labels[j] - labels[i] >= req
-                b[i, j] = m.addVar(vtype=GRB.BINARY, name=f"b_{i}_{j}")
+                b[i, j] = m.binary_var(name=f"b_{i}_{j}")
                 
                 # Nếu b[i][j] = 0: labels[i] - labels[j] >= req
-                m.addConstr(labels[i] - labels[j] >= req - M * b[i, j], name=f"radio1_{i}_{j}")
+                m.add_constraint(labels[i] - labels[j] >= req - M * b[i, j], ctname=f"radio1_{i}_{j}")
 
                 # Nếu b[i][j] = 1: labels[j] - labels[i] >= req
-                m.addConstr(labels[j] - labels[i] >= req - M * (1 - b[i, j]), name=f"radio2_{i}_{j}")
+                m.add_constraint(labels[j] - labels[i] >= req - M * (1 - b[i, j]), ctname=f"radio2_{i}_{j}")
         
         # Hàm mục tiêu: minimize span
-        m.setObjective(span, GRB.MINIMIZE)
+        m.minimize(span)
         
         start_time = time.time()
-        m.optimize()
+        sol = m.solve()
         elapsed_time = float(format(time.time() - start_time, ".3f"))
         
         # Kiểm tra kết quả
-        if m.status == GRB.OPTIMAL:
-            status = "optimal"
-            print_to_console(f"[GUROBI] Optimal solution found. Time: {elapsed_time}s")
-        else:
-            assert m.status == GRB.TIME_LIMIT and m.SolCount > 0
-            elapsed_time = TIME_LIMIT
-            status = "timeout"
-            print_to_console(f"[GUROBI] Timeout. Time: {TIME_LIMIT}s")
-        
         result_labels = [0] * (n + 1)
-        for i in range(1, n + 1): result_labels[i] = int(labels[i].X)
-        result_span = int(span.X)
+        
+        assert sol is not None
+        assert hasattr(sol, 'solve_details') and hasattr(sol.solve_details, 'status')
+        solve_status = str(sol.solve_details.status).lower()
+        
+        print_to_console(f"[CPLEX_MIP] Status: {solve_status}")
+        is_optimal = solve_status == "integer optimal solution"
+        
+        if is_optimal:
+            status = "optimal"
+            print_to_console(f"[CPLEX_MIP] Optimal solution found. Time: {elapsed_time}s")
+        else:
+            status = "timeout"
+            elapsed_time = TIME_LIMIT
+            print_to_console(f"[CPLEX_MIP] Timeout. Time: {TIME_LIMIT}s")
+        
+        for i in range(1, n + 1): 
+            result_labels[i] = int(labels[i].solution_value)
+        result_span = int(span.solution_value)
+        
         return result_labels, result_span, status, elapsed_time
 
 

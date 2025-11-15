@@ -132,18 +132,21 @@ from algorithms.smt_z3 import run_smt_z3
 from algorithms.ub_2020 import run_ub_2020
 from algorithms.ub_2019 import run_ub_2019
 from algorithms.gurobi_mip import run_gurobi
+from algorithms.cplex_mip import run_cplex_mip
 # from algorithms.lb_2012 import run_lb_2012
 # from algorithms.lb_2017 import run_lb_2017
 
 # Supported algorithms
 GUROBI = "gurobi_mip"
+CPLEX_MIP = "cplex_mip"
 LB_2012 = "lb_2012"
 LB_2017 = "lb_2017"
 UB_2020 = "ub_2020"
 UB_2019 = "ub_2019"
 SAT_PYSAT = "sat_pysat"
 SMT_Z3 = "smt_z3"
-SUPPORTED_ALGORITHMS = [UB_2020, UB_2019, SAT_PYSAT, SMT_Z3, GUROBI]
+
+SUPPORTED_ALGORITHMS = [UB_2020, UB_2019, SAT_PYSAT, SMT_Z3, GUROBI, CPLEX_MIP]
 
 # --- simple logging for CLI driver ---
 _repo_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
@@ -231,6 +234,13 @@ def main() -> None:
     
     elif args.algo == GUROBI:
         labels, span, text = run_gurobi(n, C, K, args.delta, short_input)
+        saved_text += text
+        print_to_console(f"Span found = {span}")
+        print_to_console(f"Labels: {labels[1:]}")
+        validate(labels)
+
+    elif args.algo == CPLEX_MIP:
+        labels, span, text = run_cplex_mip(n, C, K, args.delta, short_input)
         saved_text += text
         print_to_console(f"Span found = {span}")
         print_to_console(f"Labels: {labels[1:]}")
