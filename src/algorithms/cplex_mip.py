@@ -46,16 +46,26 @@ def run_cplex_mip(n: int, C: List[List[int]], K: int, delta: int, input: str) ->
         for i in range(1, n + 1):
             m.add_constraint(labels[i] <= span, ctname=f"span_constraint_{i}")
         
+
+        # Sử dụng big-M với biến nhị phân
+        M = (n + 1) * K  # Big-M constant
+        b = {}  # Biến nhị phân để mô hình OR constraint
+        
         # Ràng buộc radio: |labels[i] - labels[j]| >= C[i][j]
         for i in range(1, n + 1):
             for j in range(i + 1, n + 1):
                 req = C[i][j]
                 if req <= 0: continue
                 
-                m.add_constraint(m.logical_or(
-                    (labels[i] - labels[j] >= req), 
-                    (labels[j] - labels[i] >= req) 
-                ), ctname=f"radio_or_{i}_{j}")
+                # Biến nhị phân: b[i][j] = 0 nếu labels[i] - labels[j] >= req
+                #                b[i][j] = 1 nếu labels[j] - labels[i] >= req
+                b[i, j] = m.binary_var(name=f"b_{i}_{j}")
+                
+                # Nếu b[i][j] = 0: labels[i] - labels[j] >= req
+                m.add_constraint(labels[i] - labels[j] >= req - M * b[i, j], ctname=f"radio1_{i}_{j}")
+
+                # Nếu b[i][j] = 1: labels[j] - labels[i] >= req
+                m.add_constraint(labels[j] - labels[i] >= req - M * (1 - b[i, j]), ctname=f"radio2_{i}_{j}")
         
         # Hàm mục tiêu: minimize span
         m.minimize(span)
