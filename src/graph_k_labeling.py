@@ -256,18 +256,28 @@ def main() -> None:
     #     lower_bound = run_lb_2017(n, K, args.delta, short_input, edges)
     #     print_to_console(f"LowerBound found = {lower_bound}")
 
-    elif args.algo in [SAT_PYSAT, SMT_Z3]:
+    elif args.algo == SAT_PYSAT:
         if args.lb is not None: lower_bound = args.lb
         else: lower_bound = n - 1 if args.delta >= 0 else 0
         if args.ub is not None: upper_bound = args.ub
         else: upper_bound = (n - 1) * K
         orbit_vertices = compute_orbits(n, edges, graph_type, graph_level)
-        if args.algo == SAT_PYSAT: labels, upper, lower, text = run_sat_pysat(n, C, args.delta, orbit_vertices, short_input, upper_bound, lower_bound)
-        else: labels, upper, lower, text = run_smt_z3(n, C, args.delta, orbit_vertices, short_input, upper_bound, lower_bound)
+        labels, upper, lower, text = run_sat_pysat(n, C, args.delta, orbit_vertices, short_input, upper_bound, lower_bound)
         
         saved_text += text
         print_to_console(f"Upper bound = {upper}")
         print_to_console(f"Lower bound = {lower}")
+        print_to_console(f"Labels: {labels[1:]}")
+        validate(labels)
+
+    elif args.algo == SMT_Z3:
+        lower_bound = n - 1 if args.delta >= 0 else 0
+        upper_bound = (n - 1) * K
+        orbit_vertices = compute_orbits(n, edges, graph_type, graph_level)
+        labels, span, text = run_smt_z3(n, C, args.delta, orbit_vertices, short_input, upper_bound, lower_bound)
+        
+        saved_text += text
+        print_to_console(f"Span found = {span}")
         print_to_console(f"Labels: {labels[1:]}")
         validate(labels)
 
