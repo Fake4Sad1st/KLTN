@@ -121,8 +121,10 @@ def run_smt_z3(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[in
     if _n == 1: ub, lb = 0, 0
     else:
         # Find the smallest span that satisfies the radio constraint
+        status = test_bound(ub, TOTAL_TIME_LIMIT)
+        assert status == STATUS_SAT
         L = lb
-        R = ub
+        R = ub - 1
         while L + 1 <= R and total_time < TOTAL_TIME_LIMIT:
             mid = (L + R) // 2
             time_limit = min(TOTAL_TIME_LIMIT - int(total_time), ONE_TIME_LIMIT)
@@ -145,6 +147,7 @@ def run_smt_z3(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[in
     
     status = "optimal" if ub == lb else "timeout"
     if status == "timeout": total_time = TOTAL_TIME_LIMIT
+    else: total_time = float(format(total_time, ".3f"))
     print_to_console(f"[SMT_z3] Final span: {ub}. Status: {status}")
     row = {
         "SavedAt": datetime.now().isoformat(timespec="seconds"),

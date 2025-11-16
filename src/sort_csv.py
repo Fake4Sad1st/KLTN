@@ -81,6 +81,10 @@ def sort_csv(input_file, output_file=None):
         
         # Write sorted CSV file
         fieldnames = reader.fieldnames
+        if fieldnames is None:
+            print(f"Error: CSV file has no header row", file=sys.stderr)
+            sys.exit(1)
+        
         with open(output_file, 'w', encoding='utf-8', newline='') as f:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
