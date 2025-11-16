@@ -91,8 +91,8 @@ def run_z3(orbit_vertices: List[int], bound: int, time_limit: int) -> Tuple[str,
         return "timeout", time_limit
 
 
-def run_smt_z3(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[int], input: str, ub: int, lb: int) -> Tuple[List[int], int, int, str]:
-    def test_bound(bound: int, time_limit: float) -> int:
+def run_smt_z3(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[int], input: str, ub: int, lb: int) -> Tuple[List[int], int, str]:
+    def test_bound(bound: int, time_limit: int) -> int:
         global saved_rows, total_time
         row = {
             "SavedAt": datetime.now().isoformat(timespec="seconds"),
@@ -106,7 +106,7 @@ def run_smt_z3(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[in
         row["Result"] = status
         row["Time"] = elapsed_time
         total_time += elapsed_time
-        print_to_console(f"[SMT_z3] Total time: {total_time}s")
+        print_to_console(f"[SMT_z3] Total time: {format(total_time, '.3f')}s")
         saved_rows.append(row)
 
         if status == "sat": return STATUS_SAT
@@ -145,6 +145,7 @@ def run_smt_z3(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[in
     
     status = "optimal" if ub == lb else "timeout"
     if status == "timeout": total_time = TOTAL_TIME_LIMIT
+    print_to_console(f"[SMT_z3] Final span: {ub}. Status: {status}")
     row = {
         "SavedAt": datetime.now().isoformat(timespec="seconds"),
         "Algorithm": filename,
@@ -159,4 +160,3 @@ def run_smt_z3(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[in
     write_to_csv(saved_rows, filename)
 
     return saved_labels, ub, saved_text
-
