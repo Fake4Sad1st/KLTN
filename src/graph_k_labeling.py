@@ -180,8 +180,8 @@ def main() -> None:
     parser.add_argument("--input", required=True, help="Graph file path.")
     parser.add_argument("--delta", type=int, default=0, help="Difference between diameter and k.")
     # parser.add_argument("--bound", type=int, default=None, help="Test a specific span bound.")
-    parser.add_argument("--lb", type=int, default=None, help="Lower bound for the span.")
-    parser.add_argument("--ub", type=int, default=None, help="Upper bound for the span.")
+    # parser.add_argument("--lb", type=int, default=None, help="Lower bound for the span.")
+    # parser.add_argument("--ub", type=int, default=None, help="Upper bound for the span.")
     args = parser.parse_args()
 
     if args.algo not in SUPPORTED_ALGORITHMS:
@@ -257,16 +257,13 @@ def main() -> None:
     #     print_to_console(f"LowerBound found = {lower_bound}")
 
     elif args.algo == SAT_PYSAT:
-        if args.lb is not None: lower_bound = args.lb
-        else: lower_bound = n - 1 if args.delta >= 0 else 0
-        if args.ub is not None: upper_bound = args.ub
-        else: upper_bound = (n - 1) * K
+        lower_bound = n - 1 if args.delta >= 0 else 0
+        upper_bound = (n - 1) * K
         orbit_vertices = compute_orbits(n, edges, graph_type, graph_level)
-        labels, upper, lower, text = run_sat_pysat(n, C, args.delta, orbit_vertices, short_input, upper_bound, lower_bound)
+        labels, span, text = run_sat_pysat(n, C, args.delta, orbit_vertices, short_input, upper_bound, lower_bound)
         
         saved_text += text
-        print_to_console(f"Upper bound = {upper}")
-        print_to_console(f"Lower bound = {lower}")
+        print_to_console(f"Span found = {span}")
         print_to_console(f"Labels: {labels[1:]}")
         validate(labels)
 

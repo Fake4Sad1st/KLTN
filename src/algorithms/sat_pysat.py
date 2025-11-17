@@ -1,11 +1,12 @@
-import time, os, csv, math
+import time, os, csv
 from datetime import datetime
 from typing import List, Optional, Tuple
 
 from pysat.solvers import Glucose3
 from threading import Timer
 
-TIME_LIMIT = 600
+TOTAL_TIME_LIMIT = 1200
+ONE_TIME_LIMIT = 20
 # using integer to represent status
 STATUS_SAT = 0
 STATUS_TIMEOUT = 1
@@ -125,27 +126,7 @@ def add_special_constraints(orbit_vertices: List[int]):
     for i in range(1, n + 1): lst.append(_K(i, m))
     _add_clause(lst)
 
-def format_time(seconds: float) -> str:
-    total_seconds = int(math.floor(seconds))
-    
-    hours = total_seconds // 3600
-    minutes = (total_seconds % 3600) // 60
-    secs = total_seconds % 60
-    
-    parts = []
-    if hours > 0:
-        parts.append(f"{hours}h")
-        parts.append(f"{minutes}m")
-        parts.append(f"{secs}s")
-    elif minutes > 0:
-        parts.append(f"{minutes}m")
-        parts.append(f"{secs}s")
-    else:
-        parts.append(f"{secs}s")
-    
-    return "".join(parts)
-
-def run_glucose(bound: int) -> Tuple[str, float]:
+def run_glucose(bound: int, time_limit: int) -> Tuple[str, float]:
     print_to_console(f"[SAT_pysat] Checking span {bound} ...")
     assert sat_solver is not None
     interrupted = [False]
@@ -154,7 +135,7 @@ def run_glucose(bound: int) -> Tuple[str, float]:
         solver.interrupt()
         interrupted[0] = True
     
-    timer = Timer(TIME_LIMIT, interrupt, [sat_solver])
+    timer = Timer(time_limit, interrupt, [sat_solver])
     timer.start()
     
     start_time = time.time()
@@ -168,8 +149,8 @@ def run_glucose(bound: int) -> Tuple[str, float]:
     else:
         solution = sat_solver.get_model()
         if solution is None:
-            print_to_console(f"[SAT_pysat] TIMEOUT: Cannot determine satisfiability. Time: {TIME_LIMIT}s")
-            return "timeout", TIME_LIMIT
+            print_to_console(f"[SAT_pysat] TIMEOUT: Cannot determine satisfiability. Time: {time_limit}s")
+            return "timeout", time_limit
         
         # Extract labels from model (0-based)
         global saved_labels
@@ -184,47 +165,49 @@ def run_glucose(bound: int) -> Tuple[str, float]:
         print_to_console(f"[SAT_pysat] Solution found. Time: {elapsed_time}s")
         return "sat", elapsed_time
 
-def test_bound(delta: int, orbit_vertices: List[int], input: str, bound: int) -> int:
-    global num_clauses, n, m, sat_solver, saved_rows, total_time
-    num_clauses = 0
-    m = bound
-    sat_solver = Glucose3(use_timer=True)
 
-    add_exactly_one_constraints()
-    add_radio_constraints()
-    add_special_constraints(orbit_vertices)
+def run_sat_pysat(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[int], input: str, ub: int, lb: int) -> Tuple[List[int], int, str]:
+    def test_bound(bound: int, time_limit: int) -> int:
+        global num_clauses, n, m, sat_solver, saved_rows, total_time
+        num_clauses = 0
+        m = bound
+        sat_solver = Glucose3(use_timer=True)
+
+        add_exactly_one_constraints()
+        add_radio_constraints()
+        add_special_constraints(orbit_vertices)
+        
+        num_variables = n * (m + 1) + n * m  # K and X variables
+        
+        # print_to_console(f"[SAT_pysat] Constraints added. Statistics:")
+        # print_to_console(f"[SAT_pysat]   - Variables: {num_variables} (K: {n * (m + 1)}, X: {n * m})")
+        # print_to_console(f"[SAT_pysat]   - Clauses: {num_clauses}")
+
+        # Prepare CSV row before solving so test_bound can fill status/time
+        row = {
+            "SavedAt": datetime.now().isoformat(timespec="seconds"),
+            "Algorithm": filename,
+            "Input": input,
+            "Delta": delta,
+            "N": n,
+            "Bound": bound,
+            "Variables": num_variables,
+            "Clauses": num_clauses,
+        }
+        status, elapsed_time = run_glucose(bound, time_limit)
+        sat_solver.delete()
+
+        row["Result"] = status
+        row["Time"] = elapsed_time
+        total_time += elapsed_time
+        print_to_console(f"[SAT_pysat] Total time: {format(total_time, '.3f')}s")
+        saved_rows.append(row)
+
+        if status == "sat": return STATUS_SAT
+        elif status == "timeout": return STATUS_TIMEOUT
+        return STATUS_UNSAT
     
-    num_variables = n * (m + 1) + n * m  # K and X variables
-    
-    # print_to_console(f"[SAT_pysat] Constraints added. Statistics:")
-    # print_to_console(f"[SAT_pysat]   - Variables: {num_variables} (K: {n * (m + 1)}, X: {n * m})")
-    # print_to_console(f"[SAT_pysat]   - Clauses: {num_clauses}")
-
-    # Prepare CSV row before solving so test_bound can fill status/time
-    row = {
-        "SavedAt": datetime.now().isoformat(timespec="seconds"),
-        "Algorithm": filename,
-        "Input": input,
-        "Delta": delta,
-        "N": n,
-        "Bound": bound,
-        "Variables": num_variables,
-        "Clauses": num_clauses,
-    }
-    status, elapsed_time = run_glucose(bound)
-    sat_solver.delete()
-
-    row["Result"] = status
-    row["Time"] = elapsed_time
-    total_time += elapsed_time
-    saved_rows.append(row)
-
-    if status == "sat": return STATUS_SAT
-    elif status == "timeout": return STATUS_TIMEOUT
-    return STATUS_UNSAT
-
-def run_sat_pysat(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[int], input: str, ub: int, lb: int) -> Tuple[List[int], int, int, str]:
-    global n, C, saved_labels
+    global n, C, saved_labels, total_time
     n = _n
     C = _C
     saved_labels = [0] * (n + 1)
@@ -232,44 +215,46 @@ def run_sat_pysat(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List
     if _n == 1: ub, lb = 0, 0
     else:
         # Find the smallest span that satisfies the radio constraint
+        status = test_bound(ub, TOTAL_TIME_LIMIT)
+        assert status == STATUS_SAT
         L = lb
-        R = ub
-        newR = -1
-        while L <= R:
-            if R - L >= 8: mid = R - ((R - L) // 8)
-            else: mid = R - ((R - L) // 4)
-            status = test_bound(delta, orbit_vertices, input, mid)
+        R = ub - 1
+        while L + 1 <= R and total_time < TOTAL_TIME_LIMIT:
+            mid = (L + R) // 2
+            time_limit = min(TOTAL_TIME_LIMIT - int(total_time), ONE_TIME_LIMIT)
+            status = test_bound(mid, time_limit)
             if status == STATUS_SAT:
                 ub = mid
                 R = mid - 1
             else:
                 if status == STATUS_UNSAT: lb = mid + 1
-                elif newR == -1: newR = mid
                 L = mid + 1
-        # Find the largest span that doesn't satisfy the radio constraint
-        L = lb
-        R = newR - 1 if newR != -1 else ub - 1
-        while L <= R:
-            if R - L >= 8: mid = L + ((R - L) // 8)
-            else: mid = L + ((R - L) // 4)
-            status = test_bound(delta, orbit_vertices, input, mid)
-            if status == STATUS_UNSAT:
-                lb = mid + 1
-                L = mid + 1
-            else: R = mid - 1
     
+        while ub > lb and total_time < TOTAL_TIME_LIMIT:
+            status = test_bound(ub - 1, TOTAL_TIME_LIMIT - int(total_time))
+            if status == STATUS_SAT:
+                ub = ub - 1
+            elif status == STATUS_UNSAT:
+                lb = ub
+            else:
+                break
+
+    status = "optimal" if ub == lb else "timeout"
+    if status == "timeout": total_time = TOTAL_TIME_LIMIT
+    else: total_time = float(format(total_time, ".3f"))
+    print_to_console(f"[SAT_pysat] Final span: {ub}. Status: {status}")
     row = {
         "SavedAt": datetime.now().isoformat(timespec="seconds"),
         "Algorithm": filename,
         "Input": input,
         "Delta": delta,
         "N": n,
-        "UpperBound": ub,
-        "LowerBound": lb,
-        "TotalTime": format_time(total_time),
+        "Span": ub,
+        "Status": status,
+        "Time": total_time,
     }
     write_to_csv([row], f"{filename}_final")
     write_to_csv(saved_rows, filename)
 
-    return saved_labels, ub, lb, saved_text
+    return saved_labels, ub, saved_text
 
