@@ -33,6 +33,7 @@ def run_cplex_mip(n: int, C: List[List[int]], K: int, delta: int, input: str) ->
         m = Model(name="radio_k_labeling")
         m.set_time_limit(TIME_LIMIT)
         m.parameters.threads = 1
+        m.parameters.workmem = 2048 # MB
         
         # Tạo biến: labels và span
         labels = {}

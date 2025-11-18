@@ -33,6 +33,7 @@ def run_gurobi(n: int, C: List[List[int]], K: int, delta: int, input: str) -> Tu
         # Tạo môi trường và model
         env = gp.Env(empty=True)
         env.setParam('LogToConsole', 0)
+        env.setParam('Threads', 2)
         env.start()
         m = gp.Model("radio_k_labeling", env=env)
         m.setParam('OutputFlag', 0)

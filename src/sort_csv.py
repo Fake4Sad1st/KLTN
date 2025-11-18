@@ -4,6 +4,7 @@ Script to sort rows in a CSV file by the Input column according to a predefined 
 """
 import argparse
 import csv
+from collections import Counter
 import sys
 
 
@@ -66,14 +67,50 @@ def sort_csv(input_file, output_file=None):
         with open(input_file, 'r', encoding='utf-8') as f:
             reader = csv.DictReader(f)
             rows = list(reader)
-            
-            # Check if Input column exists
-            if 'Input' not in rows[0].keys() if rows else {}:
-                print(f"Error: CSV file does not have 'Input' column", file=sys.stderr)
+            fieldnames = reader.fieldnames
+        
+        if not rows:
+            print("Error: CSV file is empty", file=sys.stderr)
+            sys.exit(1)
+        
+        if fieldnames is None or 'Input' not in fieldnames:
+            print(f"Error: CSV file does not have 'Input' column", file=sys.stderr)
+            sys.exit(1)
+        
+        # Validate that each SORT_ORDER entry appears exactly once with no extras
+        inputs = []
+        for index, row in enumerate(rows, start=1):
+            if 'Input' not in row or not row['Input']:
+                print(f"Error: Row {index} is missing a value for 'Input'", file=sys.stderr)
                 sys.exit(1)
-            
-            # Sort rows by Input column
-            sorted_rows = sorted(rows, key=lambda row: get_sort_key(row['Input']))
+            inputs.append(row['Input'])
+        
+        counter = Counter(inputs)
+        
+        missing = [value for value in SORT_ORDER if counter.get(value, 0) == 0]
+        duplicates = [value for value in SORT_ORDER if counter.get(value, 0) > 1]
+        extras = [value for value in counter if value not in SORT_ORDER]
+        
+        if missing or duplicates or extras:
+            messages = []
+            if missing:
+                messages.append(f"Missing entries: {', '.join(missing)}")
+            if duplicates:
+                messages.append(f"Duplicate entries: {', '.join(duplicates)}")
+            if extras:
+                messages.append(f"Unexpected entries: {', '.join(extras)}")
+            print("Error: CSV validation failed. " + " | ".join(messages), file=sys.stderr)
+            sys.exit(1)
+        
+        if len(rows) != len(SORT_ORDER):
+            print(
+                f"Error: CSV must contain exactly {len(SORT_ORDER)} rows but has {len(rows)}",
+                file=sys.stderr,
+            )
+            sys.exit(1)
+        
+        # Sort rows by Input column
+        sorted_rows = sorted(rows, key=lambda row: get_sort_key(row['Input']))
         
         # Determine output file
         if output_file is None:
