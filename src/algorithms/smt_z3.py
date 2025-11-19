@@ -125,7 +125,7 @@ def run_smt_z3(_n: int, _C: List[List[int]], delta: int, orbit_vertices: List[in
         assert status == STATUS_SAT
         L = lb
         R = ub - 1
-        while L + 1 <= R and total_time < TOTAL_TIME_LIMIT:
+        while L + 2 <= R and total_time < TOTAL_TIME_LIMIT:
             mid = (L + R) // 2
             time_limit = min(TOTAL_TIME_LIMIT - int(total_time), ONE_TIME_LIMIT)
             status = test_bound(mid, time_limit)
