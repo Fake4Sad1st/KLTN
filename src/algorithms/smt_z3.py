@@ -1,7 +1,8 @@
 import time, os, csv
 from datetime import datetime
 from typing import List, Tuple
-from z3 import Solver, Ints, Int, Or, sat, unsat
+import z3
+from z3 import Ints, Int, Or, sat, unsat
 
 TOTAL_TIME_LIMIT = 1200
 ONE_TIME_LIMIT = 20
@@ -39,9 +40,8 @@ def write_to_csv(rows: List[dict], csv_name: str) -> None:
                 write_header = False
             w.writerow(row)
 
-# ============================== SMT SOLVER ==============================
 def run_z3(orbit_vertices: List[int], bound: int, time_limit: int) -> Tuple[str, float]:
-    s = Solver()
+    s = z3.Solver()
     s.set("timeout", time_limit * 1000)
     
     # Create Z3 variables

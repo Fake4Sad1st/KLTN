@@ -75,7 +75,7 @@ def enumerate_maximal_cliques(n: int, adj: List[Set[int]]) -> List[Set[int]]:
 def compute_layers(n: int, adj: List[Set[int]], L_0: Set[int], p: int) -> List[Set[int]]:
     """
     Compute layers L_0, L_1, ..., L_p.
-    L_0 is given, and L_{i+1} = N(L_i) \ (L_0 ∪ L_1 ∪ ... ∪ L_i).
+    L_0 is given, and L_{i+1} = N(L_i) - (L_0 ∪ L_1 ∪ ... ∪ L_i).
     Returns list of layers.
     """
     layers = [L_0]

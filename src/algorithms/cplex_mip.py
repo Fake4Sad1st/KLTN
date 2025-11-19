@@ -58,15 +58,10 @@ def run_cplex_mip(n: int, C: List[List[int]], K: int, delta: int, input: str) ->
                 req = C[i][j]
                 if req <= 0: continue
                 
-                # Biến nhị phân: b[i][j] = 0 nếu labels[i] - labels[j] >= req
-                #                b[i][j] = 1 nếu labels[j] - labels[i] >= req
-                b[i, j] = m.binary_var(name=f"b_{i}_{j}")
-                
-                # Nếu b[i][j] = 0: labels[i] - labels[j] >= req
-                m.add_constraint(labels[i] - labels[j] >= req - M * b[i, j], ctname=f"radio1_{i}_{j}")
-
-                # Nếu b[i][j] = 1: labels[j] - labels[i] >= req
-                m.add_constraint(labels[j] - labels[i] >= req - M * (1 - b[i, j]), ctname=f"radio2_{i}_{j}")
+                m.add_constraint(m.logical_or(
+                    (labels[i] - labels[j] >= req), 
+                    (labels[j] - labels[i] >= req) 
+                ), ctname=f"radio_or_{i}_{j}")
         
         # Hàm mục tiêu: minimize span
         m.minimize(span)
@@ -94,8 +89,8 @@ def run_cplex_mip(n: int, C: List[List[int]], K: int, delta: int, input: str) ->
             print_to_console(f"[CPLEX_MIP] Timeout. Time: {TIME_LIMIT}s")
         
         for i in range(1, n + 1): 
-            result_labels[i] = int(labels[i].solution_value)
-        result_span = int(span.solution_value)
+            result_labels[i] = int(round(labels[i].solution_value))
+        result_span = int(round(span.solution_value))
         
         return result_labels, result_span, status, elapsed_time
 
