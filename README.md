@@ -3,6 +3,7 @@
 Dự án nghiên cứu và so sánh các phương pháp giải bài toán Radio k-labeling trên đồ thị.
 
 ## Mục lục
+
 - [Hướng dẫn cài đặt](#hướng-dẫn-cài-đặt)
 - [Cách chạy code](#cách-chạy-code)
 - [Các phương pháp có sẵn](#các-phương-pháp-có-sẵn)
@@ -11,6 +12,7 @@ Dự án nghiên cứu và so sánh các phương pháp giải bài toán Radio 
 ## Hướng dẫn cài đặt
 
 ### Yêu cầu hệ thống
+
 - Python 3.10
 - Pipenv (để quản lý môi trường ảo và dependencies)
 
@@ -27,6 +29,7 @@ pipenv install
 ```
 
 Các package sẽ được cài đặt:
+
 - `python-sat` - SAT solver
 - `pypblib` - PB constraint encoding
 - `prettytable` - Hiển thị bảng đẹp
@@ -41,7 +44,7 @@ Các package sẽ được cài đặt:
 
 1. Tải CPLEX từ IBM Academic Initiative
    - Phiên bản sử dụng: v22.1.1
-   - Link: https://www.ibm.com/academic/technology/data-science
+   - Link: <https://www.ibm.com/academic/technology/data-science>
 
 2. Cài đặt CPLEX Python API.
 
@@ -51,9 +54,10 @@ Các package sẽ được cài đặt:
 
 1. Tải Gurobi từ trang chủ
    - Phiên bản sử dụng: v13.0.0
-   - Link: https://www.gurobi.com/downloads/
+   - Link: <https://www.gurobi.com/downloads/>
 
 2. Kích hoạt license (academic license miễn phí):
+
 ```bash
 grbgetkey <your-license-key>
 ```
@@ -70,7 +74,7 @@ pipenv shell
 
 Sử dụng Makefile để sinh các loại đồ thị khác nhau:
 
-#### Sinh một đồ thị cụ thể:
+#### Sinh một đồ thị cụ thể
 
 ```bash
 # Đường đi (path) với n đỉnh
@@ -101,13 +105,14 @@ make c6snake k=5 out=./graph_gen/c6snake/5.txt
 make bintree k=3 out=./graph_gen/bintree/3.txt
 ```
 
-#### Sinh toàn bộ đồ thị test:
+#### Sinh toàn bộ đồ thị test
 
 ```bash
 bash scripts/graph_gen.sh
 ```
 
 Script này sẽ sinh:
+
 - Path graphs: n = 1..25
 - Cycle graphs: n = 3..25
 - Ladder graphs: k = 1..15
@@ -120,29 +125,32 @@ Script này sẽ sinh:
 
 ### 2. Chạy thuật toán
 
-#### Chạy trực tiếp với Makefile:
+#### Chạy trực tiếp với Makefile
 
 ```bash
 make label algo=<algorithm> input=<graph_file> delta=<delta>
 ```
 
 Ví dụ:
+
 ```bash
 make label algo=sat_pysat input=./graph_gen/path/10.txt delta=0
 ```
 
-#### Chạy trực tiếp với Python:
+#### Chạy trực tiếp với Python
 
 ```bash
 python3 src/graph_k_labeling.py --algo <algorithm> --input <graph_file> --delta <delta>
 ```
 
 Ví dụ:
+
 ```bash
 python3 src/graph_k_labeling.py --algo sat_pysat --input ./graph_gen/path/10.txt --delta=0
 ```
 
-#### Tham số:
+#### Tham số
+
 - `--algo`: Tên thuật toán (xem danh sách bên dưới)
 - `--input`: Đường dẫn đến file đồ thị
 - `--delta`: Hiệu số giữa k và đường kính đồ thị (k = diameter + delta)
@@ -154,7 +162,8 @@ python3 src/graph_k_labeling.py --algo sat_pysat --input ./graph_gen/path/10.txt
 
 Các script có sẵn trong thư mục `scripts/` để chạy benchmark trên nhiều đồ thị:
 
-#### SAT solver (PyPySAT):
+#### SAT solver (PyPySAT)
+
 ```bash
 # Delta = 0
 bash scripts/sat_pysat/delta_0.sh
@@ -166,28 +175,32 @@ bash scripts/sat_pysat/delta_neg1.sh
 bash scripts/sat_pysat/delta_1.sh
 ```
 
-#### SMT solver (Z3):
+#### SMT solver (Z3)
+
 ```bash
 bash scripts/smt_z3/delta_0.sh
 bash scripts/smt_z3/delta_neg1.sh
 bash scripts/smt_z3/delta_1.sh
 ```
 
-#### Gurobi MIP:
+#### Gurobi MIP
+
 ```bash
 bash scripts/gurobi_mip/delta_0.sh
 bash scripts/gurobi_mip/delta_neg1.sh
 bash scripts/gurobi_mip/delta_1.sh
 ```
 
-#### CPLEX MIP:
+#### CPLEX MIP
+
 ```bash
 bash scripts/cplex_mip/delta_0.sh
 bash scripts/cplex_mip/delta_neg1.sh
 bash scripts/cplex_mip/delta_1.sh
 ```
 
-#### Upper bounds:
+#### Upper bounds
+
 ```bash
 # Upper bound 2019
 bash scripts/ub_2019/delta_0.sh
@@ -217,76 +230,86 @@ bash scripts/ub_2020/delta_0.sh
 Dự án cài đặt các phương pháp giải bài toán Radio k-labeling:
 
 ### 1. SAT Solver - PyPySAT (`sat_pysat`)
+
 - **Mô tả**: Giải bằng SAT solver với binary search trên span
 - **File**: `src/algorithms/sat_pysat.py`
 - **Ưu điểm**: Tìm được nghiệm tối ưu, hiệu quả với đồ thị có symmetry
 - **Sử dụng**: orbit vertices để giảm không gian tìm kiếm
 
 **Cách chạy**:
+
 ```bash
 make label algo=sat_pysat input=./graph_gen/path/10.txt delta=0
 ```
 
 ### 2. SMT Solver - Z3 (`smt_z3`)
+
 - **Mô tả**: Giải bằng SMT solver với binary search trên span
 - **File**: `src/algorithms/smt_z3.py`
 - **Ưu điểm**: Linh hoạt, dễ mô hình hóa ràng buộc
 - **Sử dụng**: orbit vertices để giảm không gian tìm kiếm
 
 **Cách chạy**:
+
 ```bash
 make label algo=smt_z3 input=./graph_gen/path/10.txt delta=0
 ```
 
 ### 3. Gurobi MIP (`gurobi_mip`)
+
 - **Mô tả**: Giải bằng Mixed Integer Programming với Gurobi
 - **File**: `src/algorithms/gurobi_mip.py`
 - **Yêu cầu**: Gurobi v13.0.0 và license
 - **Ưu điểm**: Solver thương mại mạnh mẽ, tối ưu hóa tốt
 
 **Cách chạy**:
+
 ```bash
 make label algo=gurobi_mip input=./graph_gen/path/10.txt delta=0
 ```
 
 ### 4. CPLEX MIP (`cplex_mip`)
+
 - **Mô tả**: Giải bằng Mixed Integer Programming với CPLEX
 - **File**: `src/algorithms/cplex_mip.py`
 - **Yêu cầu**: IBM CPLEX v22.1.1 (IBM Academic Initiative)
 - **Ưu điểm**: Solver IBM mạnh mẽ cho bài toán tối ưu
 
 **Cách chạy**:
+
 ```bash
 make label algo=cplex_mip input=./graph_gen/path/10.txt delta=0
 ```
 
 ### 5. Upper Bound 2019 (`ub_2019`)
+
 - **Mô tả**: 2 thuật toán heuristic tìm upper bound (năm 2019)
 - **File**: `src/algorithms/ub_2019.py`
 - **Ưu điểm**: Nhanh, không cần solver
 - **Hạn chế**: Không đảm bảo tối ưu
 
 **Cách chạy**:
+
 ```bash
 make label algo=ub_2019 input=./graph_gen/path/10.txt delta=0
 ```
 
 ### 6. Upper Bound 2020 (`ub_2020`)
+
 - **Mô tả**: Thuật toán heuristic tìm upper bound (năm 2020)
 - **File**: `src/algorithms/ub_2020.py`
 - **Ưu điểm**: Nhanh, kết quả được đăng trên tạp chí Q2
 - **Hạn chế**: Không đảm bảo tối ưu; chỉ áp dụng được với `delta = 0`.
 
 **Cách chạy**:
+
 ```bash
 make label algo=ub_2020 input=./graph_gen/path/10.txt
 ```
 
-
-
 ## Cấu trúc dự án
 
-```
+``` text
 .
 ├── README.md
 ├── Makefile                   ## Makefile để sinh đồ thị và chạy thuật toán
