@@ -162,7 +162,7 @@ python3 src/graph_k_labeling.py --algo sat_pysat --input ./graph_gen/path/10.txt
 
 Các script có sẵn trong thư mục `scripts/` để chạy benchmark trên nhiều đồ thị:
 
-#### SAT solver (PyPySAT)
+#### SAT solver (Glucose 3)
 
 ```bash
 # Delta = 0
@@ -229,7 +229,7 @@ bash scripts/ub_2020/delta_0.sh
 
 Dự án cài đặt các phương pháp giải bài toán Radio k-labeling:
 
-### 1. SAT Solver - PyPySAT (`sat_pysat`)
+### 1. SAT Solver - Glucose 3 (`sat_pysat`)
 
 - **Mô tả**: Giải bằng SAT solver với binary search trên span
 - **File**: `src/algorithms/sat_pysat.py`
