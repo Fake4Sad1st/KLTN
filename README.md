@@ -298,7 +298,7 @@ make label algo=ub_2019 input=./graph_gen/path/10.txt delta=0
 
 - **Mô tả**: Thuật toán heuristic tìm upper bound (năm 2020)
 - **File**: `src/algorithms/ub_2020.py`
-- **Ưu điểm**: Nhanh, kết quả được đăng trên tạp chí Q2
+- **Ưu điểm**: Nhanh, không cần solver
 - **Hạn chế**: Không đảm bảo tối ưu; chỉ áp dụng được với `delta = 0`.
 
 **Cách chạy**:
@@ -321,14 +321,13 @@ make label algo=ub_2020 input=./graph_gen/path/10.txt
 │   ├── cycle/                 # Chu trình
 │   ├── ladder/                # Thang
 │   ├── book/                  # Sách
-│   ├── friendship/            # Friendship graph
+│   ├── friendship/            # Friendship
 │   ├── trisnake/              # Triangle snake
 │   ├── c4snake/               # C4 snake
 │   ├── c6snake/               # C6 snake
-│   └── bintree/               # Binary tree
+│   └── bintree/               # Binomial tree
 ├── src/
-│   ├── graph_k_labeling.py    # Main driver
-│   ├── sort_csv.py            # Tiện ích sắp xếp file CSV
+│   ├── graph_k_labeling.py    # Core
 │   └── algorithms/            ## Các thuật toán
 │       ├── sat_pysat.py       # SAT solver
 │       ├── smt_z3.py          # SMT solver
