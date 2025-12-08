@@ -1,6 +1,6 @@
-# Radio k-labeling problem
+# Bài toán tô màu radio-k
 
-Dự án nghiên cứu và so sánh các phương pháp giải bài toán Radio k-labeling trên đồ thị.
+Dự án nghiên cứu và so sánh các phương pháp giải Bài toán tô màu radio-k trên đồ thị.
 
 ## Mục lục
 
@@ -101,7 +101,7 @@ make c4snake k=5 out=./graph_gen/c4snake/5.txt
 # C6 snake với k chu trình C6
 make c6snake k=5 out=./graph_gen/c6snake/5.txt
 
-# Binary tree với độ sâu k
+# Binomial tree với độ sâu k
 make bintree k=3 out=./graph_gen/bintree/3.txt
 ```
 
@@ -121,7 +121,7 @@ Script này sẽ sinh:
 - Triangle snake: k = 1..15
 - C4 snake: k = 1..15
 - C6 snake: k = 1..15
-- Binary trees: k = 0..7
+- Binomial trees: k = 0..7
 
 ### 2. Chạy thuật toán
 
@@ -227,13 +227,13 @@ bash scripts/ub_2020/delta_0.sh
 
 ## Các phương pháp có sẵn
 
-Dự án cài đặt các phương pháp giải bài toán Radio k-labeling:
+Dự án cài đặt các phương pháp giải Bài toán tô màu radio-k:
 
 ### 1. SAT Solver - Glucose 3 (`sat_pysat`)
 
 - **Mô tả**: Giải bằng SAT solver với binary search trên span
 - **File**: `src/algorithms/sat_pysat.py`
-- **Ưu điểm**: Tìm được nghiệm tối ưu, hiệu quả với đồ thị có symmetry
+- **Ưu điểm**: Tìm được nghiệm tối ưu, hiệu quả với đồ thị có tính đối xứng cao
 - **Sử dụng**: orbit vertices để giảm không gian tìm kiếm
 
 **Cách chạy**:
